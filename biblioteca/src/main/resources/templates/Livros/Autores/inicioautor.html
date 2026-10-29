@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Biblioteca - Autores</title>
+</head>
+<body>
+
+<h1>Sistema de Biblioteca</h1>
+<h2>Seja Bem-Vindo</h2>
+
+<nav>
+    <!-- GET /livros -->
+    <a th:href="@{/livros}">Início</a>
+
+    |
+
+    <!-- GET /autor -->
+    <a th:href="@{/autor}">Autores</a>
+
+    |
+
+    <!-- GET /autor/novo -->
+    <a th:href="@{/autor/novo}">Cadastrar Autor</a>
+</nav>
+
+<hr>
+
+<h2>Autores Cadastrados</h2>
+
+<!-- Verifica se a lista esta vazia -->
+<p th:if="${#lists.isEmpty(autores)}">
+    Nenhum autor cadastrado.
+</p>
+
+<!-- Exibe a tabela se houver autores -->
+<table border="1"
+       cellpadding="10"
+       th:unless="${#lists.isEmpty(autores)}">
+
+    <thead>
+    <tr>
+        <th>Nome</th>
+        <th>Descrição</th>
+        <th>Nacionalidade</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <!-- Percorre os autores cadastrados -->
+    <tr th:each="autor : ${autores}">
+
+        <td th:text="${autor.nome}"></td>
+
+        <td th:text="${autor.descricao}"></td>
+
+        <td th:text="${autor.nacionalidade}"></td>
+
+    </tr>
+    </tbody>
+
+</table>
+
+</body>
+</html>

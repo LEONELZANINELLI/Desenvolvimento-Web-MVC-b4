@@ -1,0 +1,48 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro de Autores</title>
+</head>
+<body>
+
+<h1>Cadastro de Autores</h1>
+
+<form th:action="@{/autor/salvar}"
+      th:object="${autor}"
+      method="post">
+
+    <label for="nome">Nome do Autor:</label>
+    <input type="text"
+           id="nome"
+           th:field="*{nome}"
+           required>
+    <br><br>
+
+    <label for="descricao">Descrição:</label>
+    <input type="text"
+           id="descricao"
+           th:field="*{descricao}"
+           required>
+    <br><br>
+
+    <label for="nacionalidade">Nacionalidade:</label>
+    <input type="text"
+           id="nacionalidade"
+           th:field="*{nacionalidade}"
+           required>
+    <br><br>
+
+    <button type="submit">Cadastrar Autor</button>
+
+</form>
+
+<br>
+
+<a th:href="@{/autor}">
+    Voltar para Autores
+</a>
+
+</body>
+</html>

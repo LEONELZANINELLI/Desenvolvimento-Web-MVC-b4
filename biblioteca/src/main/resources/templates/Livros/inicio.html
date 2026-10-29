@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Biblioteca - Livros</title>
+</head>
+<body>
+
+<h1>Sistema de Biblioteca</h1>
+<h2>Seja Bem-Vindo</h2>
+
+<nav>
+    <a th:href="@{/livros}">Início</a>
+    |
+    <a th:href="@{/livros/novo}">Cadastrar Livro</a>
+    |
+    <a th:href="@{/autor}">Autores</a>
+</nav>
+
+<hr>
+
+<h2>Livros Cadastrados</h2>
+
+<!-- Mensagem quando nao existem livros -->
+<p th:if="${#lists.isEmpty(livros)}">
+    Nenhum livro cadastrado.
+</p>
+
+<!-- Tabela exibida quando existem livros -->
+<table border="1" cellpadding="10"
+       th:unless="${#lists.isEmpty(livros)}">
+
+    <thead>
+    <tr>
+        <th>Título</th>
+        <th>Autor</th>
+        <th>ISBN</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="livro : ${livros}">
+        <td th:text="${livro.titulo}"></td>
+        <td th:text="${livro.autor}"></td>
+        <td th:text="${livro.isbn}"></td>
+    </tr>
+    </tbody>
+
+</table>
+
+</body>
+</html>
