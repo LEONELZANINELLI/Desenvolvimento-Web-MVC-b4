@@ -4,10 +4,7 @@ package com.ger.biblioteca.biblioteca.Controller;
 import com.ger.biblioteca.biblioteca.model.Livro;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,4 +35,13 @@ public class LivroController {
         livros.add(livro);
         return "redirect:/livros/confirmacao";
     }
+    // adicionar exclusão de livros com Metodo GET
+    @GetMapping("excluir/{indice}")
+    public String excluir(@PathVariable int indice) {
+        livros.remove(indice);
+        return "redirect:/livros";
+    }
+
 }
+
+
