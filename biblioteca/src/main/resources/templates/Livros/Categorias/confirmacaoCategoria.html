@@ -1,0 +1,47 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Categoria Cadastrada</title>
+</head>
+<body>
+
+<h1>Sistema de Biblioteca</h1>
+
+<h2>Categoria cadastrada com sucesso!</h2>
+
+<hr>
+
+<h3>Dados da Categoria</h3>
+
+<p>
+    <strong>ID:</strong>
+    <span th:text="${categoria.id}"></span>
+</p>
+
+<p>
+    <strong>Nome:</strong>
+    <span th:text="${categoria.nome}"></span>
+</p>
+
+<hr>
+
+<a th:href="@{/livros/categorias/categoriaFormulario}">
+    Cadastrar Outra Categoria
+</a>
+
+<br><br>
+
+<a th:href="@{/livros/categorias/listarCategorias}">
+    Visualizar Categorias
+</a>
+
+<br><br>
+
+<a th:href="@{/livros}">
+    Voltar ao Início
+</a>
+
+</body>
+</html>

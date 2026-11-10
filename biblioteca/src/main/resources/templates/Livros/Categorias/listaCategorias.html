@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Categorias</title>
+</head>
+<body>
+
+<h1>Sistema de Biblioteca</h1>
+<h2>Categorias Cadastradas</h2>
+
+<nav>
+    <a th:href="@{/livros}">Início</a>
+    |
+    <a th:href="@{/livros/categorias/categoriaFormulario}">
+        Cadastrar Categoria
+    </a>
+</nav>
+
+<hr>
+
+<!-- Mensagem quando nao existem categorias -->
+<p th:if="${#lists.isEmpty(categorias)}">
+    Nenhuma categoria cadastrada.
+</p>
+
+<!-- Tabela de categorias -->
+<table border="1" cellpadding="10"
+       th:unless="${#lists.isEmpty(categorias)}">
+
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Nome</th>
+        <th>Ações</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="categoria, status : ${categorias}">
+
+        <td th:text="${categoria.id}"></td>
+
+        <td th:text="${categoria.nome}"></td>
+
+        <td>
+            <a th:href="@{/livros/categorias/excluir/{indice}(indice=${status.index})}"
+               onclick="return confirm('Deseja realmente excluir esta categoria?')">
+                Excluir
+            </a>
+        </td>
+
+    </tr>
+    </tbody>
+
+</table>
+
+<br>
+
+<a th:href="@{/livros/categorias/categoriaFormulario}">
+    Cadastrar Nova Categoria
+</a>
+
+</body>
+</html>
