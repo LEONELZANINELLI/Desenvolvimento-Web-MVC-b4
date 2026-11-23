@@ -3,12 +3,12 @@
 <html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Cadastrar Categoria</title>
+    <title th:text="${indice != null} ? 'Editar Categoria' : 'Cadastrar Categoria'">Cadastrar Categoria</title>
 </head>
 <body>
 
 <h1>Sistema de Biblioteca</h1>
-<h2>Cadastrar Categoria</h2>
+<h2 th:text="${indice != null} ? 'Editar Categoria' : 'Cadastrar Categoria'">Cadastrar Categoria</h2>
 
 <nav>
     <a th:href="@{/livros}">Início</a>
@@ -20,11 +20,14 @@
 
 <hr>
 
-<h3>Nova Categoria</h3>
+<h3 th:text="${indice != null} ? 'Alterar dados da categoria' : 'Nova Categoria'">Nova Categoria</h3>
 
-<form th:action="@{/livros/categorias/salvar}"
+<form th:action="${indice != null} ? @{/livros/categorias/atualizar/{indice}(indice=${indice})} : @{/livros/categorias/salvar}"
       th:object="${categoria}"
       method="post">
+    <ul th:if="${#fields.hasErrors('*')}" role="alert">
+        <li th:each="erro : ${#fields.errors('*')}" th:text="${erro}"></li>
+    </ul>
     <!--/*@thymesVar id="categoria" type="com.ger.biblioteca.biblioteca.model.Categoria"*/-->
     <label for="id">ID da Categoria:</label>
     <input type="number"
@@ -43,7 +46,7 @@
 
     <br><br>
 
-    <button type="submit">Cadastrar Categoria</button>
+    <button type="submit" th:text="${indice != null} ? 'Salvar alterações' : 'Cadastrar Categoria'">Cadastrar Categoria</button>
 
 </form>
 

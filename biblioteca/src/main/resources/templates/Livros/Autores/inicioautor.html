@@ -44,18 +44,28 @@
         <th>Nome</th>
         <th>Descrição</th>
         <th>Nacionalidade</th>
+        <th>Ações</th>
     </tr>
     </thead>
 
     <tbody>
     <!-- Percorre os autores cadastrados -->
-    <tr th:each="autor : ${autores}">
+    <tr th:each="autor, status : ${autores}">
 
         <td th:text="${autor.nome}"></td>
 
         <td th:text="${autor.descricao}"></td>
 
         <td th:text="${autor.nacionalidade}"></td>
+
+        <td>
+            <a th:href="@{/autor/editar/{indice}(indice=${status.index})}">Editar</a>
+            |
+            <a th:href="@{/autor/excluir/{indice}(indice=${status.index})}"
+               onclick="return confirm('Deseja realmente excluir este autor?')">
+                Excluir
+            </a>
+        </td>
 
     </tr>
     </tbody>

@@ -45,6 +45,8 @@
         <td th:text="${categoria.nome}"></td>
 
         <td>
+            <a th:href="@{/livros/categorias/editar/{indice}(indice=${status.index})}">Editar</a>
+            |
             <a th:href="@{/livros/categorias/excluir/{indice}(indice=${status.index})}"
                onclick="return confirm('Deseja realmente excluir esta categoria?')">
                 Excluir
