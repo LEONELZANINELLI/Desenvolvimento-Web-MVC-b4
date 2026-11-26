@@ -1,6 +1,8 @@
 package com.ger.biblioteca.biblioteca.model;
 
+/** Modelo do formulário de categoria com ID informado pelo usuário. */
 public class Categoria {
+    // A URL de edição usa a posição na lista. Este campo guarda o ID mostrado na tabela.
     private int id;
     private String nome;
 

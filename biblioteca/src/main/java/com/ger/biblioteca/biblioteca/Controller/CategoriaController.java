@@ -13,10 +13,12 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Coordena o CRUD de categorias com validação do ID recebido pelo formulário. */
 @Controller
 @RequestMapping("/livros/categorias")
 public class CategoriaController {
 
+    // Cada instância da aplicação mantém sua própria lista em memória.
     private final List<Categoria> categorias = new ArrayList<>();
 
     // GET - Exibir formulario de cadastro
@@ -44,6 +46,7 @@ public class CategoriaController {
 
         model.addAttribute("categoria", categoria);
 
+        // O POST renderiza a confirmação com os dados que acabaram de ser cadastrados.
         return "Livros/Categorias/confirmacaoCategoria";
     }
 
@@ -54,7 +57,7 @@ public class CategoriaController {
         return "Livros/Categorias/listaCategorias";
     }
 
-    // GET - Abre o formulario com a categoria selecionada
+    // Busca pela posição da categoria na lista. O ID digitado é apenas um campo do objeto.
     @GetMapping("/editar/{indice}")
     public String editarCategoria(@PathVariable int indice, Model model) {
         verificarIndice(indice);
@@ -71,6 +74,7 @@ public class CategoriaController {
         verificarIndice(indice);
         validar(categoria, resultado);
         if (resultado.hasErrors()) {
+            // O índice mantém o formulário em modo de edição quando há erros.
             model.addAttribute("indice", indice);
             return "Livros/Categorias/categoriaFormulario";
         }
@@ -96,6 +100,7 @@ public class CategoriaController {
 
     private void validar(Categoria categoria, BindingResult resultado) {
         ValidationUtils.rejectIfEmptyOrWhitespace(resultado, "nome", "obrigatorio", "Informe o nome.");
+        // A regra do valor mínimo só é aplicada se o campo estiver sem erro de conversão.
         if (!resultado.hasFieldErrors("id") && categoria.getId() < 1) {
             resultado.rejectValue("id", "invalido", "Informe um ID maior que zero.");
         }
