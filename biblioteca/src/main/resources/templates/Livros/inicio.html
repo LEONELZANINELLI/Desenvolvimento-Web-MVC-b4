@@ -45,6 +45,7 @@
     </thead>
 
     <tbody>
+    <!--/* status.index fornece a posição que segue para as rotas de edição e exclusão. */-->
     <tr th:each="livro, status : ${livros}">
         <td th:text="${livro.titulo}"></td>
         <td th:text="${livro.autor}"></td>

@@ -9,6 +9,7 @@
 
 <h1 th:text="${indice != null} ? 'Editar Autor' : 'Cadastro de Autores'">Cadastro de Autores</h1>
 
+<!--/* O índice seleciona a ação de edição. Cada th:field lê uma propriedade de autor. */-->
 <form th:action="${indice != null} ? @{/autor/atualizar/{indice}(indice=${indice})} : @{/autor/salvar}"
       th:object="${autor}"
       method="post">

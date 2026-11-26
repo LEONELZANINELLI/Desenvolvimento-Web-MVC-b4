@@ -1,6 +1,7 @@
 
 package com.ger.biblioteca.biblioteca.model;
 
+/** Dados do cadastro de autores, mantido em uma lista própria pelo AutorController. */
 public class Autor {
 
     private String nome;

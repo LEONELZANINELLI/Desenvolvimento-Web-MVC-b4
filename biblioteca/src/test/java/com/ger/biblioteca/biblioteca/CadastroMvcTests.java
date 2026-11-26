@@ -22,8 +22,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/** Exercita os três cadastros com requisições simuladas e verifica o HTML renderizado. */
 @SpringBootTest
 @AutoConfigureMockMvc
+// Recria o contexto para isolar as listas em memória entre os cenários.
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class CadastroMvcTests {
 

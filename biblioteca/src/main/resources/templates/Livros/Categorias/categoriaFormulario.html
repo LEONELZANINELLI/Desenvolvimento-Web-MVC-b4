@@ -22,6 +22,7 @@
 
 <h3 th:text="${indice != null} ? 'Alterar dados da categoria' : 'Nova Categoria'">Nova Categoria</h3>
 
+<!--/* O índice seleciona a ação de edição. Cada th:field lê uma propriedade de categoria. */-->
 <form th:action="${indice != null} ? @{/livros/categorias/atualizar/{indice}(indice=${indice})} : @{/livros/categorias/salvar}"
       th:object="${categoria}"
       method="post">

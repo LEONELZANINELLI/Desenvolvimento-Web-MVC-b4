@@ -4,6 +4,7 @@ package com.ger.biblioteca.biblioteca.Controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
+/** Centraliza a entrada na biblioteca e a confirmação do cadastro de livro. */
 @Controller
 public class ConfirmacaoController {
 
@@ -14,7 +15,7 @@ public class ConfirmacaoController {
         return "redirect:/livros";
     }
 
-    // GET /livros/confirmacao
+    // O redirecionamento após o cadastro do livro aponta para esta rota GET.
     @GetMapping("/livros/confirmacao")
     public String confirmacao() {
         return "Livros/confirmacao";

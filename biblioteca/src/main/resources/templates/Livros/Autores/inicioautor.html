@@ -50,6 +50,7 @@
 
     <tbody>
     <!-- Percorre os autores cadastrados -->
+    <!--/* status.index fornece a posição que segue para as rotas de edição e exclusão. */-->
     <tr th:each="autor, status : ${autores}">
 
         <td th:text="${autor.nome}"></td>

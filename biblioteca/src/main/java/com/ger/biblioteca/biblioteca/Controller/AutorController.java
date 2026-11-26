@@ -17,10 +17,12 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Coordena o CRUD de autores e exibe a confirmação após um cadastro válido. */
 @Controller
 @RequestMapping("/autor")
 public class AutorController {
 
+    // Os autores são compartilhados entre requisições enquanto a aplicação está em execução.
     private final List<Autor> autores = new ArrayList<>();
 
     // GET /autor - Lista os autores cadastrados
@@ -38,7 +40,7 @@ public class AutorController {
     }
 
 
-    // POST /autor/salvar
+    // O formulário é renderizado novamente com o BindingResult quando a validação falha.
     @PostMapping("/salvar")
     public String salvar(@ModelAttribute("autor") Autor autor, BindingResult resultado) {
         validar(resultado);
@@ -46,10 +48,11 @@ public class AutorController {
             return "Livros/Autores/formularioautor";
         }
         autores.add(autor);
+        // A página de confirmação é aberta por GET depois do POST de cadastro.
         return "redirect:/autor/confirmacao";
     }
 
-    // GET /autor/editar/{indice} - Abre o formulario com os dados do autor
+    // Reutiliza o formulário de cadastro com o autor existente e a posição dele na lista.
     @GetMapping("/editar/{indice}")
     public String editar(@PathVariable int indice, Model model) {
         verificarIndice(indice);
@@ -66,6 +69,7 @@ public class AutorController {
         verificarIndice(indice);
         validar(resultado);
         if (resultado.hasErrors()) {
+            // O índice mantém a ação do formulário apontando para a atualização.
             model.addAttribute("indice", indice);
             return "Livros/Autores/formularioautor";
         }
