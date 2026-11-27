@@ -6,7 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
-/** Entidade do cadastro de autores, persistida separadamente dos livros. */
+/** Entidade do cadastro de autores que pode ser referenciada por vários livros. */
 @Entity
 public class Autor {
 

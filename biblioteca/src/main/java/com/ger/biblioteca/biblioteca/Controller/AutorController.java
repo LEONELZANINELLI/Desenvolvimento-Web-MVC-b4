@@ -3,6 +3,7 @@ package com.ger.biblioteca.biblioteca.Controller;
 
 import com.ger.biblioteca.biblioteca.model.Autor;
 import com.ger.biblioteca.biblioteca.repository.AutorRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /** Coordena o CRUD de autores e exibe a confirmação após um cadastro válido. */
 @Controller
@@ -83,11 +85,16 @@ public class AutorController {
     }
 
     // O link da tabela usa GET após a confirmação no navegador, como na aula.
-    @Transactional
     @GetMapping("/excluir/{registroId}")
-    public String excluir(@PathVariable Long registroId) {
+    public String excluir(@PathVariable Long registroId, RedirectAttributes redirect) {
         buscarAutor(registroId);
-        repository.deleteById(registroId);
+        try {
+            repository.deleteById(registroId);
+        } catch (DataIntegrityViolationException exception) {
+            // A chave estrangeira protege os livros que ainda usam este autor.
+            redirect.addFlashAttribute("erroExclusao",
+                    "Este autor está vinculado a um livro. Altere o autor no livro antes de excluir.");
+        }
         return "redirect:/autor";
     }
 

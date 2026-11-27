@@ -13,6 +13,8 @@ Aplicação em Java com Spring MVC, Thymeleaf e Spring Data JPA para gerenciar l
 
 O botão **Editar** abre o formulário preenchido. **Salvar alterações** atualiza o registro no banco pela sua chave primária. A exclusão pede confirmação no navegador. Os campos obrigatórios também são validados no servidor.
 
+Cadastre o autor em **Autores** uma vez. No formulário de livro, selecione o nome na lista. Vários livros podem usar o mesmo autor. Se o nome mudar no cadastro de autor, a listagem de livros mostra o novo nome.
+
 ### Executar
 
 Requer Java 17 ou superior. O Maven Wrapper já está incluído.
@@ -61,7 +63,8 @@ O Hibernate cria ou atualiza o esquema ao iniciar. O H2 Console fica habilitado 
 | Arquivo ou pasta | O que procurar |
 | --- | --- |
 | [`BibliotecaApplication.java`](biblioteca/src/main/java/com/ger/biblioteca/biblioteca/BibliotecaApplication.java) | `main()` inicia o Spring Boot. `@SpringBootApplication` habilita a configuração automática e a descoberta dos controllers nos subpacotes. |
-| [`model`](biblioteca/src/main/java/com/ger/biblioteca/biblioteca/model) | `Livro`, `Autor` e `Categoria` são entidades JPA, cada uma com sua tabela e chave primária gerada pelo banco. O autor do livro continua sendo texto livre. |
+| [`model`](biblioteca/src/main/java/com/ger/biblioteca/biblioteca/model) | `Livro`, `Autor` e `Categoria` são entidades JPA. `Livro` se vincula a `Autor` com `@ManyToOne` e a coluna `AUTOR_ID`. |
+| [`LivroFormulario.java`](biblioteca/src/main/java/com/ger/biblioteca/biblioteca/form/LivroFormulario.java) | Recebe título, ISBN e o ID do autor escolhido. O controller consulta o autor antes de salvar o vínculo. |
 | [`LivroController.java`](biblioteca/src/main/java/com/ger/biblioteca/biblioteca/Controller/LivroController.java) | CRUD de livros. Comece por `inicio()`, `editar()` e `atualizar()` para seguir uma requisição da lista ao formulário e de volta. |
 | [`AutorController.java`](biblioteca/src/main/java/com/ger/biblioteca/biblioteca/Controller/AutorController.java) | CRUD de autores e página de confirmação do cadastro. |
 | [`CategoriaController.java`](biblioteca/src/main/java/com/ger/biblioteca/biblioteca/Controller/CategoriaController.java) | CRUD de categorias, validação do ID e confirmação exibida após o cadastro. |
@@ -87,12 +90,14 @@ Os modelos usam campos `private`, getters e setters. O GET de cadastro cria um o
 
 1. `GET /livros` chama `inicio()`. O controller consulta `repository.findAll(...)` e entrega a lista à view pelo `Model`. Em `inicio.html`, `th:each` cria uma linha por livro, `th:text` exibe seus campos e `livro.id` forma os links de ação.
 2. `GET /livros/editar/5` chama `editar()`. `@PathVariable` lê o ID da URL. `repository.findById(5L)` retorna um `Optional<Livro>`. O controller entrega o livro e o ID à view ou responde HTTP `404` se o registro estiver ausente.
-3. Em `formulario.html`, `th:object` seleciona o livro e `th:field` associa os campos HTML às propriedades. Se o controller forneceu `registroId`, `th:action` envia o formulário para `/atualizar/{registroId}`. Um cadastro novo vai para `/salvar`.
+3. Em `formulario.html`, `th:field` associa os campos HTML às propriedades de `LivroFormulario`. A lista exibe nomes e envia o ID da opção escolhida. Se o controller forneceu `registroId`, `th:action` envia o formulário para `/atualizar/{registroId}`. Um cadastro novo vai para `/salvar`.
 4. O Spring preenche o objeto `@ModelAttribute` a partir do POST. O `BindingResult` reúne erros de conversão e validação. Em caso de erro, a view mostra as mensagens e mantém a URL de atualização.
 5. Uma atualização válida copia os campos do formulário para a entidade existente e chama `save()` com a mesma chave. No cadastro, a entidade chega sem chave e o H2 gera uma. A exclusão chama `deleteById()`. A listagem reflete essas operações mesmo depois de reiniciar.
 
 ### Detalhes para conferir durante a demonstração
 
+- **Autor vinculado.** A edição do livro abre com o autor atual selecionado. Para excluir um autor em uso, primeiro troque o autor dos livros vinculados ou exclua esses livros.
+- **Livros anteriores.** O nome digitado continua visível nos livros que já existiam. Ao editá-los, você pode manter esse nome ou selecionar um autor cadastrado para criar o vínculo.
 - **Chave primária e ID de categoria.** A chave permanece a mesma depois que outro registro é excluído. Em `Categoria`, `REGISTRO_ID` é a chave gerada pelo banco. `ID` é o número editável informado pelo usuário, validado como inteiro positivo. Dois registros podem ter o mesmo número no campo `ID`.
 - **Validação.** `required` e `min` ajudam no navegador. O controller também valida os campos e rejeita textos formados só por espaços. O ISBN é tratado como texto obrigatório. O código atual aceita qualquer ISBN preenchido.
 - **Confirmação.** Livro e autor usam Post/Redirect/Get. Depois de salvar, o POST redireciona para um GET da confirmação. Categoria renderiza a confirmação no próprio POST, e atualizar a página pode reenviar o formulário.

@@ -29,6 +29,8 @@
 
 <h2>Autores Cadastrados</h2>
 
+<p th:if="${erroExclusao != null}" th:text="${erroExclusao}" role="alert"></p>
+
 <!-- Verifica se a lista esta vazia -->
 <p th:if="${#lists.isEmpty(autores)}">
     Nenhum autor cadastrado.
