@@ -25,11 +25,14 @@
            required>
     <br><br>
 
-    <label for="autor">Autor:</label>
-    <input type="text"
-           id="autor"
-           th:field="*{autor}"
-           required>
+    <label for="autorId">Autor:</label>
+    <select id="autorId" th:field="*{autorId}" th:required="${autorAnterior == null}">
+        <option value="" th:text="${autorAnterior != null} ? 'Manter autor atual' : 'Selecione um autor'">Selecione um autor</option>
+        <option th:each="autor : ${autores}" th:value="${autor.id}" th:text="${autor.nome}"></option>
+    </select>
+    <a th:href="@{/autor/novo}">Cadastrar autor</a>
+    <p th:if="${#lists.isEmpty(autores) and autorAnterior == null}">Cadastre um autor para continuar.</p>
+    <p th:if="${autorAnterior != null}">Autor atual do livro: <span th:text="${autorAnterior}"></span></p>
     <br><br>
 
     <label for="isbn">ISBN:</label>
@@ -39,7 +42,9 @@
            required>
     <br><br>
 
-    <button type="submit" th:text="${registroId != null} ? 'Salvar alterações' : 'Cadastrar Livro'">Cadastrar Livro</button>
+    <button type="submit"
+            th:disabled="${#lists.isEmpty(autores) and autorAnterior == null}"
+            th:text="${registroId != null} ? 'Salvar alterações' : 'Cadastrar Livro'">Cadastrar Livro</button>
 
 </form>
 

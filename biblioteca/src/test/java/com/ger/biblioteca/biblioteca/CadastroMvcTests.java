@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -59,6 +60,7 @@ class CadastroMvcTests {
     void deveCompletarOCicloSemDuplicarOuAlterarOutroRegistro(String base, String formulario,
             String listagem, String atributo, Map<String, String> original,
             Map<String, String> atualizado) throws Exception {
+        prepararAutoresDosLivros(original, atualizado);
         mvc.perform(get(formulario)).andExpect(status().isOk())
                 .andExpect(content().string(containsString("action=\"" + base + "/salvar\"")));
 
@@ -79,7 +81,12 @@ class CadastroMvcTests {
                 .andExpect(content().string(containsString("action=\"" + base + "/atualizar/" + segundoId + "\"")))
                 .andExpect(content().string(containsString(">Salvar alterações</button>")));
         for (Map.Entry<String, String> campo : atualizado.entrySet()) {
-            edicao.andExpect(content().string(containsString("value=\"" + campo.getValue() + "\"")));
+            if (campo.getKey().equals("autor")) {
+                edicao.andExpect(content().string(containsString(
+                        "value=\"" + buscarIdAutor(campo.getValue()) + "\" selected=\"selected\">" + campo.getValue())));
+            } else {
+                edicao.andExpect(content().string(containsString("value=\"" + campo.getValue() + "\"")));
+            }
         }
 
         mvc.perform(post(base + "/atualizar/" + segundoId).params(parametros(original)))
@@ -112,8 +119,9 @@ class CadastroMvcTests {
     void deveValidarCadastroEAtualizacaoSemPerderOsDados(String base, String formulario,
             String listagem, String atributo, Map<String, String> original,
             Map<String, String> atualizado) throws Exception {
+        prepararAutoresDosLivros(original, atualizado);
         MultiValueMap<String, String> vazio = parametros(original);
-        original.keySet().forEach(campo -> vazio.set(campo, "   "));
+        vazio.replaceAll((campo, valores) -> List.of("   "));
 
         mvc.perform(post(base + "/salvar").params(vazio)).andExpect(status().isOk())
                 .andExpect(model().hasErrors()).andExpect(content().string(containsString("role=\"alert\"")))
@@ -154,6 +162,88 @@ class CadastroMvcTests {
                 .andExpect(model().attribute("categorias", hasSize(0)));
     }
 
+    @Test
+    void deveVincularVariosLivrosAoMesmoAutorERefletirORenomeio() throws Exception {
+        String nomeAutor = "Machado de Assis";
+        cadastrarAutor(nomeAutor);
+        Long autorId = buscarIdAutor(nomeAutor);
+        cadastrar("/livros", Map.of("titulo", "Dom Casmurro", "autor", nomeAutor, "isbn", "111"));
+        cadastrar("/livros", Map.of("titulo", "O Alienista", "autor", nomeAutor, "isbn", "222"));
+        assertThat(jdbc.queryForList("SELECT autor_id FROM livro ORDER BY id", Long.class))
+                .containsExactly(autorId, autorId);
+
+        mvc.perform(post("/autor/atualizar/" + autorId)
+                        .param("nome", "Machado de Assis atualizado")
+                        .param("descricao", "Escritor").param("nacionalidade", "Brasileira"))
+                .andExpect(redirectedUrl("/autor"));
+        mvc.perform(get("/livros")).andExpect(content().string(containsString("Machado de Assis atualizado")))
+                .andExpect(content().string(not(containsString("<td>Machado de Assis</td>"))));
+
+        var exclusao = mvc.perform(get("/autor/excluir/" + autorId))
+                .andExpect(redirectedUrl("/autor"))
+                .andExpect(flash().attributeExists("erroExclusao")).andReturn();
+        mvc.perform(get("/autor").flashAttrs(exclusao.getFlashMap()))
+                .andExpect(content().string(containsString("Este autor está vinculado a um livro.")));
+        assertThat(idsRegistrados("autores")).containsExactly(autorId);
+        assertThat(idsRegistrados("livros")).hasSize(2);
+    }
+
+    @Test
+    void deveExigirUmAutorCadastradoParaLivroNovo() throws Exception {
+        mvc.perform(get("/livros/novo"))
+                .andExpect(content().string(containsString("Cadastre um autor para continuar.")))
+                .andExpect(content().string(containsString("href=\"/autor/novo\"")))
+                .andExpect(content().string(containsString("disabled=\"disabled\"")));
+
+        for (String autorId : List.of("", "99")) {
+            mvc.perform(post("/livros/salvar")
+                            .param("titulo", "O Alienista").param("isbn", "222").param("autorId", autorId))
+                    .andExpect(status().isOk()).andExpect(model().attributeHasFieldErrors("livro", "autorId"));
+        }
+        assertThat(idsRegistrados("livros")).isEmpty();
+    }
+
+    @Test
+    void devePreservarNomeDeAutorEmLivroAntigoEAceitarVinculoPosterior() throws Exception {
+        jdbc.update("INSERT INTO livro (titulo, autor, isbn) VALUES (?, ?, ?)",
+                "Livro antigo", "Autor informado antes do vínculo", "111");
+        Long livroId = idsRegistrados("livros").get(0);
+        String atualizar = "/livros/atualizar/" + livroId;
+
+        mvc.perform(get("/livros/editar/" + livroId)).andExpect(status().isOk())
+                .andExpect(content().string(containsString("Manter autor atual")))
+                .andExpect(content().string(containsString("Autor informado antes do vínculo")));
+        mvc.perform(post(atualizar).param("titulo", "Título ajustado").param("isbn", "111").param("autorId", ""))
+                .andExpect(redirectedUrl("/livros"));
+        mvc.perform(get("/livros")).andExpect(content().string(containsString("Título ajustado")))
+                .andExpect(content().string(containsString("Autor informado antes do vínculo")));
+
+        cadastrarAutor("Autor cadastrado");
+        Long autorId = buscarIdAutor("Autor cadastrado");
+        mvc.perform(post(atualizar).param("titulo", "Título ajustado").param("isbn", "111")
+                        .param("autorId", autorId.toString()))
+                .andExpect(redirectedUrl("/livros"));
+        assertThat(jdbc.queryForObject("SELECT autor_id FROM livro WHERE id = ?", Long.class, livroId))
+                .isEqualTo(autorId);
+        mvc.perform(get("/livros")).andExpect(content().string(containsString("<td>Autor cadastrado</td>")));
+    }
+
+    private void prepararAutoresDosLivros(Map<String, String> original, Map<String, String> atualizado)
+            throws Exception {
+        if (original.containsKey("autor")) {
+            cadastrarAutor(original.get("autor"));
+            cadastrarAutor(atualizado.get("autor"));
+        }
+    }
+
+    private void cadastrarAutor(String nome) throws Exception {
+        cadastrar("/autor", Map.of("nome", nome, "descricao", "Escritor", "nacionalidade", "Brasileira"));
+    }
+
+    private Long buscarIdAutor(String nome) {
+        return jdbc.queryForObject("SELECT id FROM autor WHERE nome = ?", Long.class, nome);
+    }
+
     private List<Long> idsRegistrados(String atributo) {
         String sql = switch (atributo) {
             case "livros" -> "SELECT id FROM livro ORDER BY id";
@@ -176,7 +266,13 @@ class CadastroMvcTests {
 
     private MultiValueMap<String, String> parametros(Map<String, String> dados) {
         MultiValueMap<String, String> parametros = new LinkedMultiValueMap<>();
-        dados.forEach(parametros::add);
+        dados.forEach((campo, valor) -> {
+            if (campo.equals("autor")) {
+                parametros.add("autorId", buscarIdAutor(valor).toString());
+            } else {
+                parametros.add(campo, valor);
+            }
+        });
         return parametros;
     }
 }
