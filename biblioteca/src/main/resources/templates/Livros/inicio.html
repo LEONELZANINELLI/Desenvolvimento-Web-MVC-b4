@@ -45,16 +45,16 @@
     </thead>
 
     <tbody>
-    <!--/* status.index fornece a posição que segue para as rotas de edição e exclusão. */-->
-    <tr th:each="livro, status : ${livros}">
+    <!--/* A chave primária segue para as rotas de edição e exclusão. */-->
+    <tr th:each="livro : ${livros}">
         <td th:text="${livro.titulo}"></td>
         <td th:text="${livro.autor}"></td>
         <td th:text="${livro.isbn}"></td>
 
         <td>
-            <a th:href="@{/livros/editar/{indice}(indice=${status.index})}">Editar</a>
+            <a th:href="@{/livros/editar/{registroId}(registroId=${livro.id})}">Editar</a>
             |
-            <a th:href="@{/livros/excluir/{indice}(indice=${status.index})}"
+            <a th:href="@{/livros/excluir/{registroId}(registroId=${livro.id})}"
                onclick="return confirm('Deseja realmente excluir este livro?')">
                 Excluir
             </a>

@@ -1,5 +1,6 @@
 package com.ger.biblioteca.biblioteca;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -10,7 +11,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.util.LinkedMultiValueMap;
@@ -25,12 +28,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** Exercita os três cadastros com requisições simuladas e verifica o HTML renderizado. */
 @SpringBootTest
 @AutoConfigureMockMvc
-// Recria o contexto para isolar as listas em memória entre os cenários.
+@ActiveProfiles("test")
+// Recria o contexto para que cada cenário use um banco H2 de teste vazio.
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class CadastroMvcTests {
 
     @Autowired
     private MockMvc mvc;
+
+    @Autowired
+    private JdbcTemplate jdbc;
 
     static Stream<Arguments> cadastros() {
         return Stream.of(
@@ -57,22 +64,27 @@ class CadastroMvcTests {
 
         cadastrar(base, original);
         cadastrar(base, atualizado);
+        List<Long> ids = idsRegistrados(atributo);
+        assertThat(ids).hasSize(2);
+        String primeiroId = ids.get(0).toString();
+        String segundoId = ids.get(1).toString();
         mvc.perform(get(listagem)).andExpect(status().isOk())
                 .andExpect(model().attribute(atributo, hasSize(2)))
                 .andExpect(content().string(containsString("<tbody>")))
-                .andExpect(content().string(containsString("href=\"" + base + "/editar/1\"")))
-                .andExpect(content().string(containsString("href=\"" + base + "/excluir/1\"")));
+                .andExpect(content().string(containsString("href=\"" + base + "/editar/" + segundoId + "\"")))
+                .andExpect(content().string(containsString("href=\"" + base + "/excluir/" + segundoId + "\"")));
 
-        ResultActions edicao = mvc.perform(get(base + "/editar/1"))
+        ResultActions edicao = mvc.perform(get(base + "/editar/" + segundoId))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("action=\"" + base + "/atualizar/1\"")))
+                .andExpect(content().string(containsString("action=\"" + base + "/atualizar/" + segundoId + "\"")))
                 .andExpect(content().string(containsString(">Salvar alterações</button>")));
         for (Map.Entry<String, String> campo : atualizado.entrySet()) {
             edicao.andExpect(content().string(containsString("value=\"" + campo.getValue() + "\"")));
         }
 
-        mvc.perform(post(base + "/atualizar/1").params(parametros(original)))
+        mvc.perform(post(base + "/atualizar/" + segundoId).params(parametros(original)))
                 .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl(listagem));
+        assertThat(idsRegistrados(atributo)).containsExactlyElementsOf(ids);
         ResultActions lista = mvc.perform(get(listagem)).andExpect(status().isOk())
                 .andExpect(model().attribute(atributo, hasSize(2)))
                 .andExpect(content().string(containsString("<tbody>")));
@@ -81,12 +93,15 @@ class CadastroMvcTests {
                     resultado.getResponse().getContentAsString(), "<td>" + valor + "</td>")).isEqualTo(2));
         }
 
-        mvc.perform(get(base + "/excluir/0")).andExpect(status().is3xxRedirection())
+        mvc.perform(get(base + "/excluir/" + primeiroId)).andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl(listagem));
+        assertThat(idsRegistrados(atributo)).containsExactly(ids.get(1));
         mvc.perform(get(listagem)).andExpect(status().isOk())
                 .andExpect(model().attribute(atributo, hasSize(1)))
-                .andExpect(content().string(containsString("href=\"" + base + "/editar/0\"")));
-        mvc.perform(get(base + "/excluir/0")).andExpect(status().is3xxRedirection());
+                .andExpect(content().string(containsString("href=\"" + base + "/editar/" + segundoId + "\"")));
+        mvc.perform(get(base + "/editar/" + primeiroId)).andExpect(status().isNotFound());
+        mvc.perform(get(base + "/excluir/" + segundoId)).andExpect(status().is3xxRedirection());
+        assertThat(idsRegistrados(atributo)).isEmpty();
         mvc.perform(get(listagem)).andExpect(status().isOk())
                 .andExpect(model().attribute(atributo, hasSize(0)))
                 .andExpect(content().string(not(containsString("<tbody>"))));
@@ -106,27 +121,28 @@ class CadastroMvcTests {
         mvc.perform(get(listagem)).andExpect(model().attribute(atributo, hasSize(0)));
 
         cadastrar(base, original);
-        ResultActions erro = mvc.perform(post(base + "/atualizar/0").params(vazio))
+        String atualizacao = base + "/atualizar/" + idsRegistrados(atributo).get(0);
+        ResultActions erro = mvc.perform(post(atualizacao).params(vazio))
                 .andExpect(status().isOk()).andExpect(model().hasErrors())
                 .andExpect(content().string(containsString("role=\"alert\"")))
-                .andExpect(content().string(containsString("action=\"" + base + "/atualizar/0\"")));
+                .andExpect(content().string(containsString("action=\"" + atualizacao + "\"")));
         erro.andExpect(content().string(containsString("value=\"   \"")));
         ResultActions lista = mvc.perform(get(listagem))
                 .andExpect(model().attribute(atributo, hasSize(1)));
         for (String valor : original.values()) {
             lista.andExpect(content().string(containsString("<td>" + valor + "</td>")));
         }
-        mvc.perform(post(base + "/atualizar/0").params(parametros(atualizado)))
+        mvc.perform(post(atualizacao).params(parametros(atualizado)))
                 .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl(listagem));
     }
 
     @ParameterizedTest
     @CsvSource({"/livros, -1", "/livros, 0", "/livros, 5", "/autor, -1", "/autor, 0", "/autor, 5",
             "/livros/categorias, -1", "/livros/categorias, 0", "/livros/categorias, 5"})
-    void deveRetornar404ParaRegistroInexistente(String base, int indice) throws Exception {
-        mvc.perform(get(base + "/editar/" + indice)).andExpect(status().isNotFound());
-        mvc.perform(post(base + "/atualizar/" + indice)).andExpect(status().isNotFound());
-        mvc.perform(get(base + "/excluir/" + indice)).andExpect(status().isNotFound());
+    void deveRetornar404ParaRegistroInexistente(String base, long id) throws Exception {
+        mvc.perform(get(base + "/editar/" + id)).andExpect(status().isNotFound());
+        mvc.perform(post(base + "/atualizar/" + id)).andExpect(status().isNotFound());
+        mvc.perform(get(base + "/excluir/" + id)).andExpect(status().isNotFound());
     }
 
     @ParameterizedTest
@@ -136,6 +152,16 @@ class CadastroMvcTests {
                 .andExpect(status().isOk()).andExpect(model().attributeHasFieldErrors("categoria", "id"));
         mvc.perform(get("/livros/categorias/listarCategorias"))
                 .andExpect(model().attribute("categorias", hasSize(0)));
+    }
+
+    private List<Long> idsRegistrados(String atributo) {
+        String sql = switch (atributo) {
+            case "livros" -> "SELECT id FROM livro ORDER BY id";
+            case "autores" -> "SELECT id FROM autor ORDER BY id";
+            case "categorias" -> "SELECT registro_id FROM categoria ORDER BY registro_id";
+            default -> throw new IllegalArgumentException("Cadastro desconhecido: " + atributo);
+        };
+        return jdbc.queryForList(sql, Long.class);
     }
 
     private void cadastrar(String base, Map<String, String> dados) throws Exception {

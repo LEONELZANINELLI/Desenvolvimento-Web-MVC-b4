@@ -3,14 +3,14 @@
 <html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${indice != null} ? 'Editar Livro' : 'Cadastro de Livros'">Cadastro de Livros</title>
+    <title th:text="${registroId != null} ? 'Editar Livro' : 'Cadastro de Livros'">Cadastro de Livros</title>
 </head>
 <body>
 
-<h1 th:text="${indice != null} ? 'Editar Livro' : 'Cadastro de Livros'">Cadastro de Livros</h1>
+<h1 th:text="${registroId != null} ? 'Editar Livro' : 'Cadastro de Livros'">Cadastro de Livros</h1>
 
-<!--/* O índice seleciona a ação de edição. Cada th:field lê uma propriedade de livro. */-->
-<form th:action="${indice != null} ? @{/livros/atualizar/{indice}(indice=${indice})} : @{/livros/salvar}"
+<!--/* O ID do registro seleciona a ação de atualização. Cada th:field lê uma propriedade de livro. */-->
+<form th:action="${registroId != null} ? @{/livros/atualizar/{registroId}(registroId=${registroId})} : @{/livros/salvar}"
       th:object="${livro}"
       method="post">
 
@@ -39,7 +39,7 @@
            required>
     <br><br>
 
-    <button type="submit" th:text="${indice != null} ? 'Salvar alterações' : 'Cadastrar Livro'">Cadastrar Livro</button>
+    <button type="submit" th:text="${registroId != null} ? 'Salvar alterações' : 'Cadastrar Livro'">Cadastrar Livro</button>
 
 </form>
 

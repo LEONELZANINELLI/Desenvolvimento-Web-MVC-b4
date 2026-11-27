@@ -2,8 +2,11 @@
 package com.ger.biblioteca.biblioteca.Controller;
 
 import com.ger.biblioteca.biblioteca.model.Autor;
+import com.ger.biblioteca.biblioteca.repository.AutorRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ValidationUtils;
@@ -14,21 +17,21 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /** Coordena o CRUD de autores e exibe a confirmação após um cadastro válido. */
 @Controller
 @RequestMapping("/autor")
 public class AutorController {
 
-    // Os autores são compartilhados entre requisições enquanto a aplicação está em execução.
-    private final List<Autor> autores = new ArrayList<>();
+    private final AutorRepository repository;
+
+    public AutorController(AutorRepository repository) {
+        this.repository = repository;
+    }
 
     // GET /autor - Lista os autores cadastrados
     @GetMapping
     public String inicio(Model model) {
-        model.addAttribute("autores", autores);
+        model.addAttribute("autores", repository.findAll(Sort.by("id")));
         return "Livros/Autores/inicioautor";
     }
 
@@ -39,7 +42,6 @@ public class AutorController {
         return "Livros/Autores/formularioautor";
     }
 
-
     // O formulário é renderizado novamente com o BindingResult quando a validação falha.
     @PostMapping("/salvar")
     public String salvar(@ModelAttribute("autor") Autor autor, BindingResult resultado) {
@@ -47,41 +49,45 @@ public class AutorController {
         if (resultado.hasErrors()) {
             return "Livros/Autores/formularioautor";
         }
-        autores.add(autor);
+        repository.save(autor);
         // A página de confirmação é aberta por GET depois do POST de cadastro.
         return "redirect:/autor/confirmacao";
     }
 
-    // Reutiliza o formulário de cadastro com o autor existente e a posição dele na lista.
-    @GetMapping("/editar/{indice}")
-    public String editar(@PathVariable int indice, Model model) {
-        verificarIndice(indice);
-        model.addAttribute("autor", autores.get(indice));
-        model.addAttribute("indice", indice);
+    // O ID do banco é estável mesmo depois de excluir registros anteriores.
+    @GetMapping("/editar/{registroId}")
+    public String editar(@PathVariable Long registroId, Model model) {
+        model.addAttribute("autor", buscarAutor(registroId));
+        model.addAttribute("registroId", registroId);
         return "Livros/Autores/formularioautor";
     }
 
-    // POST /autor/atualizar/{indice} - Salva as alteracoes do autor
-    @PostMapping("/atualizar/{indice}")
-    public String atualizar(@PathVariable int indice,
+    @Transactional
+    @PostMapping("/atualizar/{registroId}")
+    public String atualizar(@PathVariable Long registroId,
                             @ModelAttribute("autor") Autor autor,
                             BindingResult resultado, Model model) {
-        verificarIndice(indice);
+        Autor existente = buscarAutor(registroId);
         validar(resultado);
         if (resultado.hasErrors()) {
-            // O índice mantém a ação do formulário apontando para a atualização.
-            model.addAttribute("indice", indice);
+            // Preserva a URL de atualização ao mostrar os erros do formulário.
+            model.addAttribute("registroId", registroId);
             return "Livros/Autores/formularioautor";
         }
-        autores.set(indice, autor);
+        // Grava os campos editáveis na entidade carregada, mantendo a chave do banco.
+        existente.setNome(autor.getNome());
+        existente.setDescricao(autor.getDescricao());
+        existente.setNacionalidade(autor.getNacionalidade());
+        repository.save(existente);
         return "redirect:/autor";
     }
 
-    // GET /autor/excluir/{indice} - Exclui o autor selecionado
-    @GetMapping("/excluir/{indice}")
-    public String excluir(@PathVariable int indice) {
-        verificarIndice(indice);
-        autores.remove(indice);
+    // O link da tabela usa GET após a confirmação no navegador, como na aula.
+    @Transactional
+    @GetMapping("/excluir/{registroId}")
+    public String excluir(@PathVariable Long registroId) {
+        buscarAutor(registroId);
+        repository.deleteById(registroId);
         return "redirect:/autor";
     }
 
@@ -91,10 +97,9 @@ public class AutorController {
         return "Livros/Autores/confirmacaoautor";
     }
 
-    private void verificarIndice(int indice) {
-        if (indice < 0 || indice >= autores.size()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Autor não encontrado.");
-        }
+    private Autor buscarAutor(Long registroId) {
+        return repository.findById(registroId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Autor não encontrado."));
     }
 
     private void validar(BindingResult resultado) {

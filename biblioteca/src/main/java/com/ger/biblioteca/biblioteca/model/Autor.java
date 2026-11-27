@@ -1,14 +1,28 @@
 
 package com.ger.biblioteca.biblioteca.model;
 
-/** Dados do cadastro de autores, mantido em uma lista própria pelo AutorController. */
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
+/** Entidade do cadastro de autores, persistida separadamente dos livros. */
+@Entity
 public class Autor {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private String nome;
     private String descricao;
     private String nacionalidade;
 
     public Autor() {
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public String getNome() {

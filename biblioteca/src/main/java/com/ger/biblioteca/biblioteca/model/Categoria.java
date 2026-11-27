@@ -1,8 +1,20 @@
 package com.ger.biblioteca.biblioteca.model;
 
-/** Modelo do formulário de categoria com ID informado pelo usuário. */
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
+/** Entidade do cadastro de categorias com código informado no formulário. */
+@Entity
 public class Categoria {
-    // A URL de edição usa a posição na lista. Este campo guarda o ID mostrado na tabela.
+
+    // Chave gerada pelo banco, usada nas URLs de edição e exclusão.
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long registroId;
+
+    // ID editável que aparece no formulário e na tabela de categorias.
     private int id;
     private String nome;
 
@@ -12,6 +24,11 @@ public class Categoria {
         this.id = id;
         this.nome = nome;
     }
+
+    public Long getRegistroId() {
+        return registroId;
+    }
+
     public int getId() {
         return id;
     }
