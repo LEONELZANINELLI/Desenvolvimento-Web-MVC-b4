@@ -38,17 +38,17 @@
     </thead>
 
     <tbody>
-    <!--/* status.index fornece a posição que segue para as rotas de edição e exclusão. */-->
-    <tr th:each="categoria, status : ${categorias}">
+    <!--/* A chave primária segue para as rotas de edição e exclusão. */-->
+    <tr th:each="categoria : ${categorias}">
 
         <td th:text="${categoria.id}"></td>
 
         <td th:text="${categoria.nome}"></td>
 
         <td>
-            <a th:href="@{/livros/categorias/editar/{indice}(indice=${status.index})}">Editar</a>
+            <a th:href="@{/livros/categorias/editar/{registroId}(registroId=${categoria.registroId})}">Editar</a>
             |
-            <a th:href="@{/livros/categorias/excluir/{indice}(indice=${status.index})}"
+            <a th:href="@{/livros/categorias/excluir/{registroId}(registroId=${categoria.registroId})}"
                onclick="return confirm('Deseja realmente excluir esta categoria?')">
                 Excluir
             </a>

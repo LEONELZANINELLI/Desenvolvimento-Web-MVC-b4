@@ -3,12 +3,12 @@
 <html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${indice != null} ? 'Editar Categoria' : 'Cadastrar Categoria'">Cadastrar Categoria</title>
+    <title th:text="${registroId != null} ? 'Editar Categoria' : 'Cadastrar Categoria'">Cadastrar Categoria</title>
 </head>
 <body>
 
 <h1>Sistema de Biblioteca</h1>
-<h2 th:text="${indice != null} ? 'Editar Categoria' : 'Cadastrar Categoria'">Cadastrar Categoria</h2>
+<h2 th:text="${registroId != null} ? 'Editar Categoria' : 'Cadastrar Categoria'">Cadastrar Categoria</h2>
 
 <nav>
     <a th:href="@{/livros}">Início</a>
@@ -20,10 +20,10 @@
 
 <hr>
 
-<h3 th:text="${indice != null} ? 'Alterar dados da categoria' : 'Nova Categoria'">Nova Categoria</h3>
+<h3 th:text="${registroId != null} ? 'Alterar dados da categoria' : 'Nova Categoria'">Nova Categoria</h3>
 
-<!--/* O índice seleciona a ação de edição. Cada th:field lê uma propriedade de categoria. */-->
-<form th:action="${indice != null} ? @{/livros/categorias/atualizar/{indice}(indice=${indice})} : @{/livros/categorias/salvar}"
+<!--/* O ID do registro seleciona a ação de atualização. Cada th:field lê uma propriedade de categoria. */-->
+<form th:action="${registroId != null} ? @{/livros/categorias/atualizar/{registroId}(registroId=${registroId})} : @{/livros/categorias/salvar}"
       th:object="${categoria}"
       method="post">
     <ul th:if="${#fields.hasErrors('*')}" role="alert">
@@ -47,7 +47,7 @@
 
     <br><br>
 
-    <button type="submit" th:text="${indice != null} ? 'Salvar alterações' : 'Cadastrar Categoria'">Cadastrar Categoria</button>
+    <button type="submit" th:text="${registroId != null} ? 'Salvar alterações' : 'Cadastrar Categoria'">Cadastrar Categoria</button>
 
 </form>
 

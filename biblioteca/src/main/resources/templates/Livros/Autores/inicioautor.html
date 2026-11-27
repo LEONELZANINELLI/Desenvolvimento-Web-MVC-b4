@@ -50,8 +50,8 @@
 
     <tbody>
     <!-- Percorre os autores cadastrados -->
-    <!--/* status.index fornece a posição que segue para as rotas de edição e exclusão. */-->
-    <tr th:each="autor, status : ${autores}">
+    <!--/* A chave primária segue para as rotas de edição e exclusão. */-->
+    <tr th:each="autor : ${autores}">
 
         <td th:text="${autor.nome}"></td>
 
@@ -60,9 +60,9 @@
         <td th:text="${autor.nacionalidade}"></td>
 
         <td>
-            <a th:href="@{/autor/editar/{indice}(indice=${status.index})}">Editar</a>
+            <a th:href="@{/autor/editar/{registroId}(registroId=${autor.id})}">Editar</a>
             |
-            <a th:href="@{/autor/excluir/{indice}(indice=${status.index})}"
+            <a th:href="@{/autor/excluir/{registroId}(registroId=${autor.id})}"
                onclick="return confirm('Deseja realmente excluir este autor?')">
                 Excluir
             </a>

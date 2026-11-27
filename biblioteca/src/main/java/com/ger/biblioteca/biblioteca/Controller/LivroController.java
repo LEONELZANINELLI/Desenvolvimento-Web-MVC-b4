@@ -2,29 +2,32 @@
 package com.ger.biblioteca.biblioteca.Controller;
 
 import com.ger.biblioteca.biblioteca.model.Livro;
+import com.ger.biblioteca.biblioteca.repository.LivroRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ValidationUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /** Coordena o CRUD de livros e devolve as views usadas pelo Thymeleaf. */
 @Controller
 @RequestMapping("/livros")
 public class LivroController {
 
-    // A lista vive no controller e é recriada vazia ao reiniciar a aplicação.
-    private final List<Livro> livros = new ArrayList<>();
+    private final LivroRepository repository;
+
+    public LivroController(LivroRepository repository) {
+        this.repository = repository;
+    }
 
     // A chave do Model é lida como ${livros} pelo template da listagem.
     @GetMapping
     public String inicio(Model model) {
-        model.addAttribute("livros", livros);
+        model.addAttribute("livros", repository.findAll(Sort.by("id")));
         return "Livros/inicio";
     }
 
@@ -42,49 +45,51 @@ public class LivroController {
         if (resultado.hasErrors()) {
             return "Livros/formulario";
         }
-        livros.add(livro);
+        repository.save(livro);
         // Post/Redirect/Get faz o navegador abrir a confirmação em uma nova requisição GET.
         return "redirect:/livros/confirmacao";
     }
 
-    // O índice vem da posição da linha na tabela. Sua presença ativa o modo de edição.
-    @GetMapping("/editar/{indice}")
-    public String editar(@PathVariable int indice, Model model) {
-        verificarIndice(indice);
-        model.addAttribute("livro", livros.get(indice));
-        model.addAttribute("indice", indice);
+    // O ID do banco é estável mesmo depois de excluir registros anteriores.
+    @GetMapping("/editar/{registroId}")
+    public String editar(@PathVariable Long registroId, Model model) {
+        model.addAttribute("livro", buscarLivro(registroId));
+        model.addAttribute("registroId", registroId);
         return "Livros/formulario";
     }
 
-    // A edição substitui o item na posição existente e mantém o tamanho da lista.
-    @PostMapping("/atualizar/{indice}")
-    public String atualizar(@PathVariable int indice,
+    @Transactional
+    @PostMapping("/atualizar/{registroId}")
+    public String atualizar(@PathVariable Long registroId,
                             @ModelAttribute("livro") Livro livro,
                             BindingResult resultado, Model model) {
-        verificarIndice(indice);
+        Livro existente = buscarLivro(registroId);
         validar(resultado);
         if (resultado.hasErrors()) {
-            // Preserva a URL de atualização ao exibir novamente um formulário inválido.
-            model.addAttribute("indice", indice);
+            // Preserva a URL de atualização ao mostrar os erros do formulário.
+            model.addAttribute("registroId", registroId);
             return "Livros/formulario";
         }
-        livros.set(indice, livro);
+        // Grava os campos editáveis na entidade carregada, mantendo a chave do banco.
+        existente.setTitulo(livro.getTitulo());
+        existente.setAutor(livro.getAutor());
+        existente.setIsbn(livro.getIsbn());
+        repository.save(existente);
         return "redirect:/livros";
     }
 
-    // O link da tabela usa GET após a confirmação do usuário no navegador.
-    @GetMapping("excluir/{indice}")
-    public String excluir(@PathVariable int indice) {
-        verificarIndice(indice);
-        livros.remove(indice);
+    // O link da tabela usa GET após a confirmação no navegador, como na aula.
+    @Transactional
+    @GetMapping("/excluir/{registroId}")
+    public String excluir(@PathVariable Long registroId) {
+        buscarLivro(registroId);
+        repository.deleteById(registroId);
         return "redirect:/livros";
     }
 
-    // Converte uma posição fora dos limites em HTTP 404 antes de acessar a lista.
-    private void verificarIndice(int indice) {
-        if (indice < 0 || indice >= livros.size()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Livro não encontrado.");
-        }
+    private Livro buscarLivro(Long registroId) {
+        return repository.findById(registroId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Livro não encontrado."));
     }
 
     // A validação no servidor também rejeita campos preenchidos apenas com espaços.
